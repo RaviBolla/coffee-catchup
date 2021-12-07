@@ -14,7 +14,12 @@
         const pick = () => {
             const filtered = filterSelected()
             const [first] = filtered
-            console.log('Here is the pair to catchup: ', first);
+
+            const secondFilter = filtered.filter(name => name !== first && !catchups[first].includes(name))
+            let [second] = secondFilter;
+            catchups[first].push(second)
+            catchups[second].push(first)
+            console.log('Here is the pair to catchup: ', first, second);
         }
 
     </script>
