@@ -19,6 +19,9 @@
 
             if (catchups[first].length === names.length - 1) {
                 full.innerText = 'End of the cycle for catchups';
+                label.innerText = ""
+                pair1.innerText = ""
+                pair2.innerText = ""
                 return;
             }
 
@@ -36,8 +39,8 @@
 
 <body>
     <button onclick="pick()">Spin the wheel</button>
-    <p id="full"></p>
-    <p>Here is the pair to catchup:</p>
+    <p id="full" style="color: red;"></p>
+    <p id="label">Here is the pair to catchup:</p>
     <p id="pair1"></p>
     <p id="pair2"></p>
 </body>
