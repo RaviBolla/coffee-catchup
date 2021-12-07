@@ -4,8 +4,17 @@
     <title>Coffee Catchups</title>
     <script type="text/javascript">
 
+        const names = ['ravi', 'ani', 'add', 'mah', 'van', 'sur', 'har', 'bre', 'lokesh']
+        const catchups = names.reduce((acc, name) => {
+            acc[name] = []
+            return acc
+        }, {})
+
+        const filterSelected = () => names.sort((a, b) => catchups[a].length - catchups[b].length)
         const pick = () => {
-            console.log('Here is the pair to catchup.');
+            const filtered = filterSelected()
+            const [first] = filtered
+            console.log('Here is the pair to catchup: ', first);
         }
 
     </script>
