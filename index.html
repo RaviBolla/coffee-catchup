@@ -56,14 +56,14 @@ function makeApiCall() {
 
     var request = gapi.client.sheets.spreadsheets.values.get(params);
     request.then(function(response) {
-        names = response.result.values.map(catchups => {
-            const [name] = catchups
-            return name
-        })
-        catchups = names.reduce((acc, name) => {
-                acc[name] = []
-                return acc
+        catchups = response.result.values.reduce((acc, catchups) => {
+            const [name, ...paris] = catchups
+            acc[name] = paris
+            return acc;
         }, {})
+        names = Object.keys(catchups)
+        console.log("catchups", catchups)
+        console.log("names", names)
     }, function(reason) {
     console.error('error: ' + reason.result.error.message);
     });
