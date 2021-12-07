@@ -27,6 +27,7 @@
             pair.innerText = `${first.toUpperCase()} - ${second.toUpperCase()}`
             catchups[first].push(second)
             catchups[second].push(first)
+            updatePairs()
         }
 
     </script>
@@ -43,6 +44,23 @@
 </html>
 
 <script>
+    function updatePairs() {
+        const data = names.map(name => ([name, ...catchups[name]]), [])
+        console.log("updating data", data);
+        const params = {
+            spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',
+            range: 'A:Z',
+            valueInputOption: 'RAW'
+        }
+        var request = gapi.client.sheets.spreadsheets.values.update(params, { values: data });
+        request.then(function(response) {
+            console.log("Updated successfully");
+
+        }, function(reason) {
+            console.error('error: ' + reason.result.error.message);
+        });
+    }
+    
 function makeApiCall() {
     var params = {
     // The spreadsheet to request.
