@@ -4,11 +4,10 @@
     <title>Coffee Catchups</title>
     <script type="text/javascript">
 
-        const names = ['ravi', 'anirudh', 'addy', 'mahitha', 'yvonne', 'juan', 'suresh', 'harish', 'brent', 'lokesh']
-        const catchups = names.reduce((acc, name) => {
-            acc[name] = []
-            return acc
-        }, {})
+        var names = []
+        var catchups = {}
+        // const names = ['ravi', 'anirudh', 'addy', 'mahitha', 'yvonne', 'juan', 'suresh', 'harish', 'brent', 'lokesh']
+        
 
         const shuffle = () => names.sort(() => Math.random() - 0.5)
 
@@ -52,15 +51,19 @@ function makeApiCall() {
     var params = {
     // The spreadsheet to request.
     spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',  // TODO: Update placeholder value.
-
-    // The ranges to retrieve from the spreadsheet.
-    range: 'A:Z'
+    range: 'A:Z',
     };
 
     var request = gapi.client.sheets.spreadsheets.values.get(params);
     request.then(function(response) {
-    // TODO: Change code below to process the `response` object:
-    console.log(response.result);
+        names = response.result.values.map(catchups => {
+            const [name] = catchups
+            return name
+        })
+        catchups = names.reduce((acc, name) => {
+                acc[name] = []
+                return acc
+        }, {})
     }, function(reason) {
     console.error('error: ' + reason.result.error.message);
     });
