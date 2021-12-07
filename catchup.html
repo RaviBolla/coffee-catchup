@@ -18,15 +18,17 @@
             const [first] = filtered
 
             if (catchups[first].length === names.length - 1) {
-                console.log('End of the cycle for catchups');
+                full.innerText = 'End of the cycle for catchups';
                 return;
             }
 
+            pair1.innerText = first.toUpperCase()
+
             const secondFilter = filtered.filter(name => name !== first && !catchups[first].includes(name))
             let [second] = secondFilter;
+            pair2.innerText = second.toUpperCase()
             catchups[first].push(second)
             catchups[second].push(first)
-            console.log('Here is the pair to catchup: ', first, second);
         }
 
     </script>
@@ -34,6 +36,10 @@
 
 <body>
     <button onclick="pick()">Spin the wheel</button>
+    <p id="full"></p>
+    <p>Here is the pair to catchup:</p>
+    <p id="pair1"></p>
+    <p id="pair2"></p>
 </body>
 
 </html>
