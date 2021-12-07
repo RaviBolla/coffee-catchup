@@ -15,6 +15,11 @@
             const filtered = filterSelected()
             const [first] = filtered
 
+            if (catchups[first].length === names.length - 1) {
+                console.log('End of the cycle for catchups');
+                return;
+            }
+
             const secondFilter = filtered.filter(name => name !== first && !catchups[first].includes(name))
             let [second] = secondFilter;
             catchups[first].push(second)
