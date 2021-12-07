@@ -6,8 +6,6 @@
 
         var names = []
         var catchups = {}
-        // const names = ['ravi', 'anirudh', 'addy', 'mahitha', 'yvonne', 'juan', 'suresh', 'harish', 'brent', 'lokesh']
-        
 
         const shuffle = () => names.sort(() => Math.random() - 0.5)
 
@@ -19,16 +17,14 @@
             if (catchups[first].length === names.length - 1) {
                 full.innerText = 'End of the cycle for catchups';
                 label.innerText = ""
-                pair1.innerText = ""
-                pair2.innerText = ""
+                pair.innerText = ""
                 return;
             }
 
-            pair1.innerText = first.toUpperCase()
-
             const secondFilter = filtered.filter(name => name !== first && !catchups[first].includes(name))
             let [second] = secondFilter;
-            pair2.innerText = second.toUpperCase()
+            label.innerText = "Here is the pair to catchup:";
+            pair.innerText = `${first.toUpperCase()} - ${second.toUpperCase()}`
             catchups[first].push(second)
             catchups[second].push(first)
         }
@@ -37,11 +33,11 @@
 </head>
 
 <body>
-    <button onclick="pick()">Spin the wheel</button>
+    <p id="list"></p>
     <p id="full" style="color: red;"></p>
-    <p id="label">Here is the pair to catchup:</p>
-    <p id="pair1"></p>
-    <p id="pair2"></p>
+    <p id="label"></p>
+    <p id="pair"></p>
+    <button onclick="pick()">Spin the wheel</button>
 </body>
 
 </html>
@@ -57,15 +53,17 @@ function makeApiCall() {
     var request = gapi.client.sheets.spreadsheets.values.get(params);
     request.then(function(response) {
         catchups = response.result.values.reduce((acc, catchups) => {
-            const [name, ...paris] = catchups
-            acc[name] = paris
+            const [name, ...pairs] = catchups
+            acc[name] = pairs
             return acc;
         }, {})
         names = Object.keys(catchups)
-        console.log("catchups", catchups)
-        console.log("names", names)
+
+        const listNames = names.map(name => `<li>${name}</li>`)
+        list.innerHTML = `<h2>List of people</h2><ul>${listNames.join("")}</ul>`
+
     }, function(reason) {
-    console.error('error: ' + reason.result.error.message);
+        console.error('error: ' + reason.result.error.message);
     });
 }
 
