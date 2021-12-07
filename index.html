@@ -100,10 +100,12 @@ function handleClientLoad() {
 function updateSignInStatus(isSignedIn) {
     if (isSignedIn) {
         makeApiCall();
+    } else {
+        handleSignIn()
     }
 }
 
-function handleSignInClick(event) {
+function handleSignIn(event) {
     gapi.auth2.getAuthInstance().signIn();
 }
 
@@ -115,5 +117,4 @@ function handleSignOutClick(event) {
     onload="this.onload=function(){};handleClientLoad()"
     onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
-<button id="signin-button" onclick="handleSignInClick()">Sign in</button>
 <button id="signout-button" onclick="handleSignOutClick()">Sign out</button>
