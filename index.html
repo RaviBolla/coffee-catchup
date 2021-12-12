@@ -15,7 +15,7 @@
             const [first] = filtered
 
             if (catchups[first].length === names.length - 1) {
-                full.innerText = 'End of the cycle for catchups';
+                full.innerHTML = 'End of the cycle for catchups <button onclick="restart()">Start New Cycle</button>';
                 label.innerText = ""
                 pair.innerText = ""
                 return;
@@ -56,6 +56,22 @@
         request.then(function (response) {
             console.log("Updated successfully");
 
+        }, function (reason) {
+            console.error('error: ' + reason.result.error.message);
+        });
+    }
+
+    function restart() {
+        const params = {
+            spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',
+            range: 'B:Z'
+        }
+        var request = gapi.client.sheets.spreadsheets.values.clear(params);
+        request.then(function (response) {
+            console.log("Data cleared successfully");
+            catchups = names.reduce((obj, name) => ({ ...obj, [name]: [] }), {})
+            pick()
+            full.innerText = '';
         }, function (reason) {
             console.error('error: ' + reason.result.error.message);
         });
