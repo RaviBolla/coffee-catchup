@@ -397,7 +397,7 @@ SOFTWARE.
       })
       .attr("text-anchor", "end")
       .text(function (d, i) {
-        return data[i];
+        return `${data[i]} (${catchups[data[i]].length})`;
       });
 
     container.on("click", spinWheelForPair);
