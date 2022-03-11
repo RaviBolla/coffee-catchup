@@ -1,151 +1,437 @@
 <html>
 
 <head>
-    <title>Coffee Catchups</title>
-    <script type="text/javascript">
+  <title>Coffee Catchups</title>
+  <script type="text/javascript">
+    var names = [];
+    var catchups = {};
 
-        var names = []
-        var catchups = {}
+    const shuffle = () => names.sort(() => Math.random() - 0.5);
 
-        const shuffle = () => names.sort(() => Math.random() - 0.5)
+    const filterSelected = () =>
+      shuffle().sort((a, b) => catchups[a].length - catchups[b].length);
+    const pick = () => {
+      const filtered = filterSelected();
+      const [first] = filtered;
 
-        const filterSelected = () => shuffle().sort((a, b) => catchups[a].length - catchups[b].length)
-        const pick = () => {
-            const filtered = filterSelected()
-            const [first] = filtered
+      if (catchups[first].length === names.length - 1) {
+        full.innerHTML =
+          'End of the cycle for catchups <button onclick="restart()">Start New Cycle</button>';
+        label.innerText = "";
+        pair.innerText = "";
+        return;
+      }
 
-            if (catchups[first].length === names.length - 1) {
-                full.innerHTML = 'End of the cycle for catchups <button onclick="restart()">Start New Cycle</button>';
-                label.innerText = ""
-                pair.innerText = ""
-                return;
-            }
-
-            const secondFilter = filtered.filter(name => name !== first && !catchups[first].includes(name))
-            let [second] = secondFilter;
-            label.innerText = "Here is the pair to catchup:";
-            pair.innerText = `${first.toUpperCase()} - ${second.toUpperCase()}`
-            catchups[first].push(second)
-            catchups[second].push(first)
-            updatePairs()
-        }
-
-    </script>
+      const secondFilter = filtered.filter(
+        (name) => name !== first && !catchups[first].includes(name)
+      );
+      let [second] = secondFilter;
+      catchups[first].push(second);
+      catchups[second].push(first);
+      updatePairs();
+      return [first, second];
+    };
+  </script>
 </head>
 
 <body>
-    <p id="list"></p>
-    <p id="full" style="color: red;"></p>
-    <p id="label"></p>
-    <p id="pair"></p>
-    <button onclick="pick()">Spin the wheel</button>
+  <div style="display: flex">
+    <div style="display: flex; align-items: center">
+      <div id="chart"></div>
+      <div id="question">
+        <h1></h1>
+      </div>
+    </div>
+    <div>
+      <p id="full" style="color: red"></p>
+      <p id="label"></p>
+      <p id="pair"></p>
+    </div>
+  </div>
 </body>
 
 </html>
-
-<script>
-    function updatePairs() {
-        const data = names.map(name => ([name, ...catchups[name]]), [])
-        console.log("updating data", data);
-        const params = {
-            spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',
-            range: 'A:Z',
-            valueInputOption: 'RAW'
-        }
-        var request = gapi.client.sheets.spreadsheets.values.update(params, { values: data });
-        request.then(function (response) {
-            console.log("Updated successfully");
-
-        }, function (reason) {
-            console.error('error: ' + reason.result.error.message);
-        });
-    }
-
-    function restart() {
-        const params = {
-            spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',
-            range: 'B:Z'
-        }
-        var request = gapi.client.sheets.spreadsheets.values.clear(params);
-        request.then(function (response) {
-            console.log("Data cleared successfully");
-            catchups = names.reduce((obj, name) => ({ ...obj, [name]: [] }), {})
-            pick()
-            full.innerText = '';
-        }, function (reason) {
-            console.error('error: ' + reason.result.error.message);
-        });
-    }
-
-    function makeApiCall() {
-        var params = {
-            // The spreadsheet to request.
-            spreadsheetId: '1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8',  // TODO: Update placeholder value.
-            range: 'A:Z',
-        };
-
-        var request = gapi.client.sheets.spreadsheets.values.get(params);
-        request.then(function (response) {
-            catchups = response.result.values.reduce((acc, catchups) => {
-                const [name, ...pairs] = catchups
-                acc[name] = pairs
-                return acc;
-            }, {})
-            names = Object.keys(catchups)
-
-            const listNames = names.map(name => `<li>${name}</li>`)
-            list.innerHTML = `<h2>List of people</h2><ul>${listNames.join("")}</ul>`
-
-        }, function (reason) {
-            console.error('error: ' + reason.result.error.message);
-        });
-    }
-
-    function initClient() {
-        var API_KEY = 'AIzaSyDRkD9Mt7fVwBupGzYAR6U2IWzWGx98vMg';  // TODO: Update placeholder with desired API key.
-
-        var CLIENT_ID = '391661606467-uatfosnmokslgkv2teqpo2d6uhpcrmo6.apps.googleusercontent.com';  // TODO: Update placeholder with desired client ID.
-
-        // TODO: Authorize using one of the following scopes:
-        //   'https://www.googleapis.com/auth/drive'
-        //   'https://www.googleapis.com/auth/drive.file'
-        //   'https://www.googleapis.com/auth/drive.readonly'
-        //   'https://www.googleapis.com/auth/spreadsheets'
-        //   'https://www.googleapis.com/auth/spreadsheets.readonly'
-        var SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
-
-        gapi.client.init({
-            'apiKey': API_KEY,
-            'clientId': CLIENT_ID,
-            'scope': SCOPE,
-            'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-        }).then(function () {
-            gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
-            updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-        });
-    }
-
-    function handleClientLoad() {
-        gapi.load('client:auth2', initClient);
-    }
-
-    function updateSignInStatus(isSignedIn) {
-        if (isSignedIn) {
-            makeApiCall();
-        } else {
-            handleSignIn()
-        }
-    }
-
-    function handleSignIn(event) {
-        gapi.auth2.getAuthInstance().signIn();
-    }
-
-    function handleSignOutClick(event) {
-        gapi.auth2.getAuthInstance().signOut();
-    }
-</script>
-<script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
-    onreadystatechange="if (this.readyState === 'complete') this.onload()">
-    </script>
 <button id="signout-button" onclick="handleSignOutClick()">Sign out</button>
+
+<!--
+    
+MIT License
+Copyright (c) 2017 Jeremy Rue
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
+<style type="text/css">
+  text {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    pointer-events: none;
+  }
+
+  #chart {
+    width: 500px;
+    height: 500px;
+  }
+
+  #question {}
+
+  #question h1 {
+    font-size: 50px;
+    font-weight: bold;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    top: 50%;
+    -webkit-transform: translate(0, -50%);
+    transform: translate(0, -50%);
+  }
+</style>
+
+<script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
+  onreadystatechange="if (this.readyState === 'complete') this.onload()"></script>
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+  function updatePairs() {
+    const data = names.map((name) => [name, ...catchups[name]], []);
+    console.log("updating data", data);
+    const params = {
+      spreadsheetId: "1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8",
+      range: "A:Z",
+      valueInputOption: "RAW",
+    };
+    var request = gapi.client.sheets.spreadsheets.values.update(params, {
+      values: data,
+    });
+    request.then(
+      function (response) {
+        console.log("Updated successfully");
+      },
+      function (reason) {
+        console.error("error: " + reason.result.error.message);
+      }
+    );
+  }
+
+  function restart() {
+    const params = {
+      spreadsheetId: "1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8",
+      range: "B:Z",
+    };
+    var request = gapi.client.sheets.spreadsheets.values.clear(params);
+    request.then(
+      function (response) {
+        console.log("Data cleared successfully");
+        catchups = names.reduce((obj, name) => ({ ...obj, [name]: [] }), {});
+        spinWheelForPair();
+        full.innerText = "";
+      },
+      function (reason) {
+        console.error("error: " + reason.result.error.message);
+      }
+    );
+  }
+
+  function makeApiCall() {
+    var params = {
+      // The spreadsheet to request.
+      spreadsheetId: "1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8", // TODO: Update placeholder value.
+      range: "A:Z",
+    };
+
+    var request = gapi.client.sheets.spreadsheets.values.get(params);
+    request.then(
+      function (response) {
+        catchups = response.result.values.reduce((acc, catchups) => {
+          const [name, ...pairs] = catchups;
+          acc[name] = pairs;
+          return acc;
+        }, {});
+        names = Object.keys(catchups);
+
+        setWheel();
+      },
+      function (reason) {
+        console.error("error: " + reason.result.error.message);
+      }
+    );
+  }
+
+  function initClient() {
+    var API_KEY = "AIzaSyDRkD9Mt7fVwBupGzYAR6U2IWzWGx98vMg"; // TODO: Update placeholder with desired API key.
+
+    var CLIENT_ID =
+      "391661606467-uatfosnmokslgkv2teqpo2d6uhpcrmo6.apps.googleusercontent.com"; // TODO: Update placeholder with desired client ID.
+
+    // TODO: Authorize using one of the following scopes:
+    //   'https://www.googleapis.com/auth/drive'
+    //   'https://www.googleapis.com/auth/drive.file'
+    //   'https://www.googleapis.com/auth/drive.readonly'
+    //   'https://www.googleapis.com/auth/spreadsheets'
+    //   'https://www.googleapis.com/auth/spreadsheets.readonly'
+    var SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+
+    gapi.client
+      .init({
+        apiKey: API_KEY,
+        clientId: CLIENT_ID,
+        scope: SCOPE,
+        discoveryDocs: [
+          "https://sheets.googleapis.com/$discovery/rest?version=v4",
+        ],
+      })
+      .then(function () {
+        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
+        updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+      });
+  }
+
+  function handleClientLoad() {
+    gapi.load("client:auth2", initClient);
+  }
+
+  function updateSignInStatus(isSignedIn) {
+    if (isSignedIn) {
+      makeApiCall();
+    } else {
+      handleSignIn();
+    }
+  }
+
+  function handleSignIn(event) {
+    gapi.auth2.getAuthInstance().signIn();
+  }
+
+  function handleSignOutClick(event) {
+    gapi.auth2.getAuthInstance().signOut();
+  }
+
+  var data;
+  function spinWheelForPair() {
+    label.innerText = "";
+    pair.innerText = "";
+
+    const selectedPair = pick();
+    if (!selectedPair) {
+      return;
+    }
+    const [first, second] = selectedPair;
+
+    const firstIndex = data.findIndex((name) => name == first);
+    const secondIndex = data.findIndex((name) => name == second);
+    console.log("selected", firstIndex, secondIndex);
+
+    spin(firstIndex);
+    setTimeout(() => {
+      spin(secondIndex);
+      setTimeout(() => {
+        label.innerText = "Here is the pair to catchup:";
+        pair.innerText = `${first.toUpperCase()} - ${second.toUpperCase()}`;
+      }, 4000);
+    }, 4000);
+  }
+
+  var container;
+  function spin(picked) {
+    container.on("click", null);
+
+    //all slices have been seen, all done
+    // console.log("OldPick: " + oldpick.length, "Data length: " + data.length);
+    // if (oldpick.length == data.length) {
+    //   console.log("done");
+    //   container.on("click", null);
+    //   return;
+    // }
+
+    var ps = 360 / data.length,
+      pieslice = Math.round(1440 / data.length),
+      rng = Math.floor(Math.random() * 1440 + 360);
+
+    rotation = (data.length - picked) * ps;
+
+    // if (oldpick.indexOf(picked) !== -1) {
+    //   d3.select(this).call(spinWheelForPair);
+    //   return;
+    // } else {
+    //   oldpick.push(picked);
+    // }
+
+    rotation += 90 - Math.round(ps / 2);
+
+    vis
+      .transition()
+      .duration(3000)
+      .attrTween("transform", rotTween)
+      .each("end", function () {
+        //mark question as seen
+        d3.select(".slice:nth-child(" + (picked + 1) + ") path");
+        // .attr("fill", "#111");
+
+        console.log("");
+        //populate question
+        d3.select("#question h1").text(data[picked]);
+
+        oldrotation = rotation;
+
+        container.on("click", spinWheelForPair);
+      });
+  }
+
+  function rotTween(to) {
+    var i = d3.interpolate(oldrotation % 360, rotation);
+    return function (t) {
+      return "rotate(" + i(t) + ")";
+    };
+  }
+
+  function getRandomNumbers() {
+    var array = new Uint16Array(1000);
+    var scale = d3.scale.linear().range([360, 1440]).domain([0, 100000]);
+
+    if (
+      window.hasOwnProperty("crypto") &&
+      typeof window.crypto.getRandomValues === "function"
+    ) {
+      window.crypto.getRandomValues(array);
+      console.log("works");
+    } else {
+      //no support for crypto, get crappy random numbers
+      for (var i = 0; i < 1000; i++) {
+        array[i] = Math.floor(Math.random() * 100000) + 1;
+      }
+    }
+
+    return array;
+  }
+  function setWheel() {
+    padding = { top: 20, right: 40, bottom: 0, left: 0 },
+      w = 500 - padding.left - padding.right,
+      h = 500 - padding.top - padding.bottom,
+      r = Math.min(w, h) / 2,
+      rotation = 0,
+      oldrotation = 0,
+      picked = 100000,
+      oldpick = [],
+      color = d3.scale.category20(); //category20c()
+    //randomNumbers = getRandomNumbers();
+
+    //http://osric.com/bingo-card-generator/?title=HTML+and+CSS+BINGO!&words=padding%2Cfont-family%2Ccolor%2Cfont-weight%2Cfont-size%2Cbackground-color%2Cnesting%2Cbottom%2Csans-serif%2Cperiod%2Cpound+sign%2C%EF%B9%A4body%EF%B9%A5%2C%EF%B9%A4ul%EF%B9%A5%2C%EF%B9%A4h1%EF%B9%A5%2Cmargin%2C%3C++%3E%2C{+}%2C%EF%B9%A4p%EF%B9%A5%2C%EF%B9%A4!DOCTYPE+html%EF%B9%A5%2C%EF%B9%A4head%EF%B9%A5%2Ccolon%2C%EF%B9%A4style%EF%B9%A5%2C.html%2CHTML%2CCSS%2CJavaScript%2Cborder&freespace=true&freespaceValue=Web+Design+Master&freespaceRandom=false&width=5&height=5&number=35#results
+
+    data = names.map((name) => name);
+
+    var svg = d3
+      .select("#chart")
+      .append("svg")
+      .data([data])
+      .attr("width", w + padding.left + padding.right)
+      .attr("height", h + padding.top + padding.bottom);
+
+    container = svg
+      .append("g")
+      .attr("class", "chartholder")
+      .attr(
+        "transform",
+        "translate(" +
+        (w / 2 + padding.left) +
+        "," +
+        (h / 2 + padding.top) +
+        ")"
+      );
+
+    vis = container.append("g");
+
+    var pie = d3.layout
+      .pie()
+      .sort(null)
+      .value(function (d) {
+        return 1;
+      });
+
+    // declare an arc generator function
+    var arc = d3.svg.arc().outerRadius(r);
+
+    // select paths, use arc generator to draw
+    var arcs = vis
+      .selectAll("g.slice")
+      .data(pie)
+      .enter()
+      .append("g")
+      .attr("class", "slice");
+
+    arcs
+      .append("path")
+      .attr("fill", function (d, i) {
+        return color(i);
+      })
+      .attr("d", function (d) {
+        return arc(d);
+      });
+
+    // add the text
+    arcs
+      .append("text")
+      .attr("transform", function (d) {
+        d.innerRadius = 0;
+        d.outerRadius = r;
+        d.angle = (d.startAngle + d.endAngle) / 2;
+        return (
+          "rotate(" +
+          ((d.angle * 180) / Math.PI - 90) +
+          ")translate(" +
+          (d.outerRadius - 10) +
+          ")"
+        );
+      })
+      .attr("text-anchor", "end")
+      .text(function (d, i) {
+        return data[i];
+      });
+
+    container.on("click", spinWheelForPair);
+
+    //make arrow
+    svg
+      .append("g")
+      .attr(
+        "transform",
+        "translate(" +
+        (w + padding.left + padding.right) +
+        "," +
+        (h / 2 + padding.top) +
+        ")"
+      )
+      .append("path")
+      .attr("d", "M-" + r * 0.15 + ",0L0," + r * 0.05 + "L0,-" + r * 0.05 + "Z")
+      .style({ fill: "black" });
+
+    //draw spin circle
+    container
+      .append("circle")
+      .attr("cx", 0)
+      .attr("cy", 0)
+      .attr("r", 60)
+      .style({ fill: "white", cursor: "pointer" });
+
+    //spin text
+    container
+      .append("text")
+      .attr("x", 0)
+      .attr("y", 15)
+      .attr("text-anchor", "middle")
+      .text("SPIN")
+      .style({ "font-weight": "bold", "font-size": "30px" });
+  }
+</script>
