@@ -28,7 +28,7 @@
       let [second] = secondFilter;
       catchups[first].push(second);
       catchups[second].push(first);
-      updatePairs();
+      updatePairs(first, second);
       return [first, second];
     };
   </script>
@@ -105,15 +105,15 @@ SOFTWARE.
   onreadystatechange="if (this.readyState === 'complete') this.onload()"></script>
 <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script type="text/javascript" charset="utf-8">
-  function updatePairs() {
-    const data = names.map((name) => [name, ...catchups[name]], []);
+  function updatePairs(first, second) {
+    const data = [[first, second]];
     console.log("updating data", data);
     const params = {
       spreadsheetId: "1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8",
-      range: "A:Z",
+      range: "Catchups",
       valueInputOption: "RAW",
     };
-    var request = gapi.client.sheets.spreadsheets.values.update(params, {
+    var request = gapi.client.sheets.spreadsheets.values.append(params, {
       values: data,
     });
     request.then(
@@ -145,25 +145,35 @@ SOFTWARE.
     );
   }
 
-  function makeApiCall() {
+  function fetchData() {
+    makeApiCall("Names", (response) => {
+      names.push(...response.result.values.flat())
+      names.forEach((name) => {
+        catchups[name] = []
+      })
+
+      makeApiCall("Catchups", (response) => {
+        response.result.values.forEach(element => {
+          const [pair1, pair2] = element;
+          catchups[pair1].push(pair2)
+          catchups[pair2].push(pair1)
+        });
+        setWheel();
+      });
+    });
+  }
+
+
+  function makeApiCall(sheetName, callback) {
     var params = {
       // The spreadsheet to request.
       spreadsheetId: "1mqL_X87rRvU8VO9rw3SgmokEwVnLt6Hcx374MUye4H8", // TODO: Update placeholder value.
-      range: "A:Z",
+      range: `${sheetName}!A:Z`,
     };
 
     var request = gapi.client.sheets.spreadsheets.values.get(params);
     request.then(
-      function (response) {
-        catchups = response.result.values.reduce((acc, catchups) => {
-          const [name, ...pairs] = catchups;
-          acc[name] = pairs;
-          return acc;
-        }, {});
-        names = Object.keys(catchups);
-
-        setWheel();
-      },
+      callback,
       function (reason) {
         console.error("error: " + reason.result.error.message);
       }
@@ -205,7 +215,7 @@ SOFTWARE.
 
   function updateSignInStatus(isSignedIn) {
     if (isSignedIn) {
-      makeApiCall();
+      fetchData();
     } else {
       handleSignIn();
     }
